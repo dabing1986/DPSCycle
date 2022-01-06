@@ -1,0 +1,32 @@
+## Interface: 20502
+## Title: DPSCycle
+## Version: 3.54
+## Author: Abin
+## OptionalDeps: Masque, ButtonFacade
+## SavedVariables: DPSCycleDB
+## SavedVariablesPerCharacter: DPSCycleCharDB
+
+Includes\InterfaceOptionPage-1.0.lua
+Includes\ButtonFacadeSupport-1.0.lua
+Includes\LibPlayerSpells-1.0.lua
+Includes\LibComboPoints-1.0.lua
+Includes\EmbedEvent-1.0.lua
+
+Locales\enUS.lua
+Locales\zhCN.lua
+Locales\zhTW.lua
+
+Core.lua
+
+Utilities\ModuleManager.lua
+Utilities\Auras.lua
+Utilities\Sequence.lua
+
+GUI\Templates.lua
+GUI\MainFrame.lua
+GUI\SpellFrames.lua
+GUI\WatchFrames.lua
+GUI\InfoFrame.lua
+GUI\CastingBar.lua
+
+OptionFrame.lua

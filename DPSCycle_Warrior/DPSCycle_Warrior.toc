@@ -1,0 +1,10 @@
+﻿## Interface: 20502
+## Title: DPSCycle - |cff00ff00Warrior|r
+## Title-zhCN: DPSCycle - |cff00ff00战士|r
+## Title-zhTW: DPSCycle - |cff00ff00戰士|r
+## Version: 3.0
+## Author: Fengshen
+## Dependencies: DPSCycle
+
+Module.lua
+
