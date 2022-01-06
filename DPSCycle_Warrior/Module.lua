@@ -336,22 +336,19 @@ function module:FuryHS()
 	return self:FuryProc()
 end
 
-
-
-
-
-
-
+-- 第一次修改 主要针对的双持狂暴战士
 function module:FuryProc()
+
+	-- this logic will be triggered when you equip the weapon in offhand 
 	local istt = UnitIsUnit("targettarget", "player")
 	local hp = self:UnitHealthPercent("target")
 	local ihp = self:UnitHealthPercent("player")
 	local chargeCD = self:GetSpellCooldown(CHARGE)
 	local btCD, _, _,BTEnabled = self:GetSpellCooldown(BLOODTHIRST)
 	local windCD, _, _,windCDEnabled = self:GetSpellCooldown(WHIRLWIND)
-	local _, _, _, _, fennuzhangwo = GetTalentInfo(1, 8)
-	local base, posBuff, negBuff = UnitAttackPower("player")
-	local playerAP = base + posBuff + negBuff;
+	-- local _, _, _, _, fennuzhangwo = GetTalentInfo(1, 8)
+	-- local base, posBuff, negBuff = UnitAttackPower("player")
+	-- local playerAP = base + posBuff + negBuff;
 	-- local enemycount , enemy20count = self.ene
 	-- GetShapeshiftFormID() ~= 17
 	-- Battle Stance - 17
@@ -378,7 +375,7 @@ function module:FuryProc()
 	-- 	return BERSERKER_STANCE
 	-- end
 
-
+	-- highest level heroric strike 29707
 	if not self:CanAE() and hp > 20 and not IsCurrentSpell(29707) then
 
 		if self:IsUsableSpell(HERORIC_STRIKE, 1, 1) and UnitPower("player") > 60 then
@@ -414,6 +411,7 @@ function module:FuryProc()
 		return BLOODRAGE
 	end
 
+	-- there might be the chance you will get aoe damage for the scar boss need to add additional logic here 
 	if self:IsUsableSpell(BERSERKER_RAGE, 1, 1) and incombat and istt then
 		return BERSERKER_RAGE
 	end
@@ -426,7 +424,7 @@ function module:FuryProc()
 		-- 斩杀阶段
 		if hp < 20 then
 
-			if hp < 10 and not module:IsStrongTarget() then
+			if hp < 10 and not module:IsStrongTarget() or (hp < 5 and module:IsStrongTarget())then
 				if self:IsUsableSpell(EXECUTE, 1, 1) then
 					return EXECUTE
 				end
@@ -439,12 +437,12 @@ function module:FuryProc()
 			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and windCD > 4 then
 				return BLOODTHIRST
 			end
-		
-			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and windCD > 2 and UnitPower("player") > 25 then
+
+			if self:IsUsableSpell(BLOODTHIRST, 1, 1)  and UnitPower("player") > 50 then
 				return BLOODTHIRST
 			end
-		
-			if self:IsUsableSpell(BLOODTHIRST, 1, 1)  and UnitPower("player") > 50 then
+
+			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and windCD > 2 and UnitPower("player") > 25 then
 				return BLOODTHIRST
 			end
 		
@@ -452,38 +450,32 @@ function module:FuryProc()
 				return BLOODTHIRST
 			end
 		
-
 			if self:IsUsableSpell(EXECUTE, 1, 1) and btCD > 2 and windCD > 2  then
 				return EXECUTE
 			end
 
 		-- 非斩杀阶段
 		elseif hp > 20 then
-
-
 			if self:IsUsableSpell(WHIRLWIND, 1, 1) then
 				return WHIRLWIND
 			end
 			
-			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and windCD > 4 and self:InMelee() then
+			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and windCD > 4 then
 				return BLOODTHIRST
 			end
-		
-			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and windCD > 2 and self:InMelee() and UnitPower("player") > 25 then
+
+			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 50 then
 				return BLOODTHIRST
 			end
-		
-			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and self:InMelee() and UnitPower("player") > 50 then
+
+			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and windCD > 2 and UnitPower("player") > 25 then
 				return BLOODTHIRST
 			end
-		
+
 			if self:IsUsableSpell(BLOODTHIRST, 1, 1) then
 				return BLOODTHIRST
 			end
-
 		end
-		
-
 	end
 
 	-- AOE
@@ -499,10 +491,6 @@ function module:FuryProc()
 		if self:IsUsableSpell(SWEEPING_STRIKES, 1, 1) then
 			return SWEEPING_STRIKES
 		end
-
-		-- if not self:IsUsableSpell(SWEEPING_STRIKES, 1, 1) and self:IsUsableSpell(BLOODTHIRST, 1, 1) then
-		-- 	return BLOODTHIRST
-		-- end
 
 		if self:PlayerBuff("横扫攻击") then
 			-- body
@@ -531,47 +519,37 @@ function module:FuryProc()
 			end
 
 		else
+			if not self:IsUsableSpell(SWEEPING_STRIKES, 1) then
+				if self:IsUsableSpell(CLEAVE, 1, 1) and UnitPower("player") > 50 and not IsCurrentSpell(25231) then
+					return CLEAVE
+				end
 
-			if self:IsUsableSpell(CLEAVE, 1, 1) and UnitPower("player") > 50 and not IsCurrentSpell(25231) then
-				return CLEAVE
+				if self:IsUsableSpell(CLEAVE, 1, 1) and UnitPower("player") > 25 and windCD > 1.5 and not IsCurrentSpell(25231) then
+					return CLEAVE
+				end
+
+				if self:IsUsableSpell(WHIRLWIND, 1, 1) then
+					return WHIRLWIND
+				end
+
+				if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 75  then
+					return BLOODTHIRST
+				end
+
+				if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 50  and not IsCurrentSpell(25231) and windCD > 1.5 then
+					return BLOODTHIRST
+				end
 			end
-
-			if self:IsUsableSpell(CLEAVE, 1, 1) and UnitPower("player") > 25 and windCD > 1.5 and not IsCurrentSpell(25231) then
-				return CLEAVE
-			end
-
-			if self:IsUsableSpell(WHIRLWIND, 1, 1) then
-				return WHIRLWIND
-			end
-
-			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 75  then
-				return BLOODTHIRST
-			end
-
-			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 50  and not IsCurrentSpell(25231) and windCD > 1.5 then
-				return BLOODTHIRST
-			end
-
-
 		end
-		-- if self:PlayerBuff("横扫攻击")
 	end
 
 	-- AOE > 4 
 
 	if incombat and self:InMelee() and self:CanAE4() then
 
-		-- if self:IsUsableSpell(WHIRLWIND, 1, 1) then
-		-- 	return WHIRLWIND
-		-- end
-
 		if self:IsUsableSpell(SWEEPING_STRIKES, 1, 1) then
 			return SWEEPING_STRIKES
 		end
-
-		-- if not self:IsUsableSpell(SWEEPING_STRIKES, 1, 1) and self:IsUsableSpell(BLOODTHIRST, 1, 1) then
-		-- 	return BLOODTHIRST
-		-- end
 
 		if self:PlayerBuff("横扫攻击") then
 			-- body
@@ -596,91 +574,30 @@ function module:FuryProc()
 			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 50  and not IsCurrentSpell(25231) and windCD > 1.5 then
 				return BLOODTHIRST
 			end
-
-
 		else
+			if not self:IsUsableSpell(SWEEPING_STRIKES, 1) then
+				if self:IsUsableSpell(CLEAVE, 1, 1) and UnitPower("player") > 50 and not IsCurrentSpell(25231) then
+					return CLEAVE
+				end
 
-			if self:IsUsableSpell(CLEAVE, 1, 1) and UnitPower("player") > 50 and not IsCurrentSpell(25231) then
-				return CLEAVE
-			end
+				if self:IsUsableSpell(CLEAVE, 1, 1) and UnitPower("player") > 25 and windCD > 1.5 and not IsCurrentSpell(25231) then
+					return CLEAVE
+				end
 
-			if self:IsUsableSpell(CLEAVE, 1, 1) and UnitPower("player") > 25 and windCD > 1.5 and not IsCurrentSpell(25231) then
-				return CLEAVE
-			end
+				if self:IsUsableSpell(WHIRLWIND, 1, 1) then
+					return WHIRLWIND
+				end
 
-			if self:IsUsableSpell(WHIRLWIND, 1, 1) then
-				return WHIRLWIND
-			end
+				if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 75  then
+					return BLOODTHIRST
+				end
 
-			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 75  then
-				return BLOODTHIRST
-			end
-
-			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 50  and not IsCurrentSpell(25231) and windCD > 1.5 then
-				return BLOODTHIRST
-			end
-
-		
+				if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 50  and not IsCurrentSpell(25231) and windCD > 1.5 then
+					return BLOODTHIRST
+				end
+			end	
 		end
-		-- if self:PlayerBuff("横扫攻击")
 	end
-
-
-	-- 		return WHIRLWIND
-	-- 	if self:IsUsableSpell(WHIRLWIND, 1, 1) and self:CanAE() and self:InMelee() and UnitName("target") ~= ("维克尼拉斯大帝") then
--- 	end
-
--- 	-- if self:IsUsableSpell(EXECUTE, 1, 1) then
--- 	-- 	return EXECUTE
--- 	-- end
-
--- 	if self:IsUsableSpell(BLOODTHIRST, 1, 1) then
--- 		return BLOODTHIRST
--- 	end
-
--- 	if self:IsUsableSpell(CLEAVE, 1, 1) and UnitPower("player") > 25 and self:CanAE() and self:InMelee() and not IsCurrentSpell(20569) and UnitName("target") ~= ("维克尼拉斯大帝") then
--- 		return CLEAVE
--- 	end
--- --[[
--- 	if self:IsUsableSpell(DEATH_WISH, 1, 1) and self:InMelee() and not istt then
--- 		return DEATH_WISH
--- 	end
--- ]]--
--- 	if self:IsUsableSpell(BLOODRAGE, 1, 1) and UnitPower("player") < 30 and ihp > 55 and incombat then
--- 		return BLOODRAGE
--- 	end
-
--- 	if self:IsUsableSpell(WHIRLWIND, 1, 1) and btCD > 4 and self:InMelee() and UnitName("target") ~= ("维克尼拉斯大帝") and UnitName("target") ~= ("克苏恩") then
--- 		return WHIRLWIND
--- 	end
-
--- 	if self:IsUsableSpell(WHIRLWIND, 1, 1) and btCD > 2 and self:InMelee() and UnitName("target") ~= ("维克尼拉斯大帝") and UnitName("target") ~= ("克苏恩") and UnitPower("player") > 48 then
--- 		return WHIRLWIND
--- 	end
-
--- 	if self:IsUsableSpell(WHIRLWIND, 1, 1) and self:InMelee() and UnitName("target") ~= ("维克尼拉斯大帝") and UnitName("target") ~= ("克苏恩") and UnitPower("player") > 54 then
--- 		return WHIRLWIND
--- 	end
-
--- 	if self:IsUsableSpell(BERSERKER_RAGE, 1, 1) and incombat and istt then
--- 		return BERSERKER_RAGE
--- 	end
-
--- 	if self:IsUsableSpell(HERORIC_STRIKE, 1, 1) and UnitPower("player") > 60 and not IsCurrentSpell(11567) then
--- 		return UnitName("target") == ("堕落的瓦拉斯塔兹") and CLEAVE or HERORIC_STRIKE
--- 	end
-
--- 	if self:IsUsableSpell(HERORIC_STRIKE, 1, 1) and btCD > 4 and UnitName("target") ~= ("堕落的瓦拉斯塔兹") and UnitPower("player") > 32 and not IsCurrentSpell(11567) then
--- 		return HERORIC_STRIKE
--- 	end
-
--- 	if self:IsUsableSpell(HERORIC_STRIKE, 1, 1) and btCD > 2 and UnitName("target") ~= ("堕落的瓦拉斯塔兹") and UnitPower("player") > 42 and not IsCurrentSpell(11567) then
--- 		return HERORIC_STRIKE
--- 	end
-
--- 	if self:IsUsableSpell(BERSERKER_RAGE, 1, 1) and incombat and UnitName("target") ~= ("奥妮克希亚") and UnitName("target") ~= ("玛格曼达") and UnitName("target") ~= ("奈法利安") and UnitName("target") ~= ("古拉巴什狂暴者") and UnitName("target") ~= ("格拉斯") and self:InMelee() then
--- 		return BERSERKER_RAGE
--- 	end
 end
 
 function module:TwoHandFury()
