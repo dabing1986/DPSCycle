@@ -43,6 +43,7 @@ local EXECUTE = GetSpellInfo(25236)
 local EXPOSE_ARMOR = GetSpellInfo(8647)
 local FLURRY = GetSpellInfo(12319)
 
+
 -- 断筋
 local HAMSTRING = GetSpellInfo(25212)
 
@@ -67,7 +68,7 @@ local SHIELD_WALL = GetSpellInfo(871)
 -- 猛击
 local SLAM = GetSpellInfo(1464)
 -- 破甲攻击
-local SUNDER_ARMOR = GetSpellInfo(7386)
+local SUNDER_ARMOR = GetSpellInfo(25225)
 -- 嘲讽
 local TAUNT = GetSpellInfo(355)
 -- 雷霆
@@ -86,9 +87,26 @@ local BAOHUZHUFU = GetSpellInfo(1022)
 
 local boom = GetSpellInfo(34428)
 
+-- pvp
+
+local zhisidaji = GetSpellInfo(30330)
+
+
+-- 援护
+-- 盾墙
+-- 盾牌格挡
+-- 破釜沉舟
+-- 横扫攻击
+-- 鲁莽
+-- 死亡志愿
+-- 缴械
+
 module.cooldowns = { 3411, 871, 2565, 12975, 12328, 1719, 12292, 676 }
 
-local dpswarrioraoe, dpswarriorhs, dpswarriorchaofeng, dpswarriortank
+-- --pvp CD监测
+-- module.cooldowns = {100,20252,12292,30350,2687,18499}--20252（拦截）,100(冲锋),12292(死亡之愿),30350(联盟勋章),2687(血性狂暴),18499(狂暴之怒)
+
+local dpswarrioraoe, dpswarriorhs, dpswarriorchaofeng, dpswarriortank, pvpwarrior
 local incombat, dodgetime, dodgeGUID, swingtime, arr2, arr5, arr8, arr9, arr12, arr13, arr15, arr16, isOffHand, _
 local dpswarriorframe = CreateFrame("Frame")
 dpswarriorframe:RegisterEvent("PLAYER_REGEN_DISABLED")
@@ -837,6 +855,63 @@ function module:ProtectionProc()
 	end
 end
 
+function module:pvpwarrior()
+
+	if self:IsUsableSpell(HERORIC_STRIKE, 1, 1) and UnitPower("player") > 90 then
+		return HERORIC_STRIKE
+	end
+	
+	-- if self:Canop() and UnitPower("player") < 26 and UnitPower("player") > 4 and GetShapeshiftFormID() ~= 17 then
+	-- 	return BATTLE_STANCE
+	-- end
+
+	--压制可用，施放压制
+	if self:IsUsableSpell(OVERPOWER) then
+		return OVERPOWER
+	end
+
+--如果不在战斗状态，且在战斗姿态，施放冲锋
+  if not incombat and self:IsUsableSpell(CHARGE) then
+    return CHARGE
+  end
+
+--触发乘胜追击优先使用乘胜追击  
+	if self:IsUsableSpell(VICTORY_RUSH) then
+		return VICTORY_RUSH
+	end  
+
+--没有致死debuff且怒气>29,则施放致死打击	
+  if  not self:TargetDebuff(zhisidaji) and UnitPower("player") > 29 then
+		return zhisidaji
+	end	
+
+
+--有致死debuff，斩杀可用，怒气>13，施放斩杀	
+	if self:TargetDebuff(zhisidaji) and self:IsUsableSpell(EXECUTE) and UnitPower("player") > 13 then
+		return EXECUTE
+	end
+
+--有致死debuff，致死打击可用，怒气>29，施放致死打击		
+  if self:TargetDebuff(zhisidaji) and self:IsUsableSpell(zhisidaji, 1) and UnitPower("player") > 29 then
+		return zhisidaji
+	end	
+
+--没有断筋debuff则施放断筋
+  if not self:TargetDebuff(HAMSTRING) and self:IsUsableSpell(HAMSTRING, 1, 1) and UnitPower("player") > 7 then            
+    return HAMSTRING
+  end
+
+--有致死debuff，旋风斩可用，怒气>25，施放旋风斩
+		if self:TargetDebuff(zhisidaji) and self:IsUsableSpell(WHIRLWIND) and UnitPower("player") > 25 then
+		return WHIRLWIND
+	end	
+
+--有致死debuff，没有破甲debuff，怒气>15，使用破甲攻击
+  if self:TargetDebuff(zhisidaji) and self:TargetDebuffStack(SUNDER_ARMOR) < 3 and UnitPower("player") > 15 then            
+  return SUNDER_ARMOR
+  end	
+end
+
 function module:OnSpellRequest(spec, strongTarget)
 	if self:IsUsableSpell(CHARGE, 1, 1, 1) then
 		return CHARGE
@@ -846,6 +921,9 @@ function module:OnSpellRequest(spec, strongTarget)
 	end
 	if dpswarriorchaofeng then
 		return self:ChaoFeng()
+	end
+	if pvpwarrior then
+		return self:pvpwarrior()
 	end
 	if dpswarriortank then
 		return self:FuryTank()
@@ -904,6 +982,14 @@ SlashCmdList["DPSWARRIOR"] = function(msg)
 			dpswarriorchaofeng = 1
 			print("开启嘲讽模式，保证目标为自己。")
 		end
+	elseif (command == "pvp") then
+		if pvpwarrior then
+			pvpwarrior = nil
+			print("关闭嘲讽模式，恢复常用坦克循环")
+		else
+			pvpwarrior = 1
+			print("pvp开始。")
+		end	
 	elseif (command == "") then
 		print("请使用参数ae开关AE模式，使用参数hs开关极限英勇模式，使用参数chaofeng开关坦克嘲讽模式，使用参数tank开关狂暴双持坦克模式。")
 	end
