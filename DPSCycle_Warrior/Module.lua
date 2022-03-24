@@ -46,6 +46,9 @@ local FLURRY = GetSpellInfo(12319)
 
 -- 断筋
 local HAMSTRING = GetSpellInfo(25212)
+-- local luanwu = GetSpellInfo(25970)
+-- crippling-poison-ii
+local cripplingpPoison = GetSpellInfo(3421)
 
 local HERORIC_STRIKE = GetSpellInfo(78)
 -- local INTERCEPT = GetSpellInfo(20252)
@@ -101,10 +104,10 @@ local zhisidaji = GetSpellInfo(30330)
 -- 死亡志愿
 -- 缴械
 
-module.cooldowns = { 3411, 871, 2565, 12975, 12328, 1719, 12292, 676 }
+-- module.cooldowns = { 3411, 871, 2565, 12975, 12328, 1719, 12292, 676 }
 
 -- --pvp CD监测
--- module.cooldowns = {100,20252,12292,30350,2687,18499}--20252（拦截）,100(冲锋),12292(死亡之愿),30350(联盟勋章),2687(血性狂暴),18499(狂暴之怒)
+module.cooldowns = {25275,3411,30330,1680,23920,676}--20252（拦截）,100(冲锋),12292(死亡之愿),30350(联盟勋章),2687(血性狂暴),18499(狂暴之怒)
 
 local dpswarrioraoe, dpswarriorhs, dpswarriorchaofeng, dpswarriortank, pvpwarrior
 local incombat, dodgetime, dodgeGUID, swingtime, arr2, arr5, arr8, arr9, arr12, arr13, arr15, arr16, isOffHand, _
@@ -338,7 +341,7 @@ end
 
 function module:FuryHS()
 	local weaponspeed = UnitAttackSpeed("player")
-
+	-- mainSpeed, offSpeed = UnitAttackSpeed(unit)
 	if not swingtime then
 		swingtime = 0
 	end
@@ -396,14 +399,41 @@ function module:FuryProc()
 	-- highest level heroric strike 29707
 	if not self:CanAE() and hp > 20 and not IsCurrentSpell(29707) then
 
-		if self:IsUsableSpell(HERORIC_STRIKE, 1, 1) and UnitPower("player") > 60 then
+		if self:IsUsableSpell(HERORIC_STRIKE, 1, 1) and UnitPower("player") > 70 then
 			return HERORIC_STRIKE
 		end
 
 			
-		if self:IsUsableSpell(HERORIC_STRIKE, 1, 1) and UnitPower("player") > 30 and btCD > 1.5 and windCD > 1.5  then
+		if self:IsUsableSpell(HERORIC_STRIKE, 1, 1) and UnitPower("player") > 35 and btCD > 1.5 and windCD > 1.5  then
 			return HERORIC_STRIKE
 		end
+	end
+
+-- when to perform HAMSTRING and OVERPOWER
+	if not self:CanAE()  and hp > 20 then
+
+		if  self:IsUsableSpell(HAMSTRING, 1, 1)  and not self:PlayerBuff("乱舞") and UnitPower("player") > 80 and btCD > 1.5 and windCD > 1.5  then
+			return HAMSTRING
+		end
+		local mainspeed, offhandspeed = UnitAttackSpeed("player")
+		-- print("offhandspeed:".. offhandspeed)
+		if offhandspeed < 1.5 then
+			-- body
+			if  self:IsUsableSpell(HAMSTRING, 1, 1)  and UnitPower("player") > 40 and btCD > 1.5 and windCD > 1.5  then
+				return HAMSTRING
+			end
+		else
+			-- body
+			if  self:IsUsableSpell(HAMSTRING, 1, 1)  and UnitPower("player") > 50 and btCD > 1.5 and windCD > 1.5  then
+				return HAMSTRING
+			end
+		end
+
+
+		if self:Canop() and self:IsUsableSpell(OVERPOWER, 1, 1) and UnitPower("player") < 15 and btCD > 3 and windCD > 3 then
+			return OVERPOWER
+		end
+
 	end
 
 
@@ -415,9 +445,9 @@ function module:FuryProc()
 		return BERSERKER_STANCE
 	end
 
-	if self:PlayerBuffTime(BATTLE_SHOUT) < 3 then
-		return BATTLE_SHOUT
-	end
+	-- if self:PlayerBuffTime(BATTLE_SHOUT) < 3 then
+	-- 	return BATTLE_SHOUT
+	-- end
 
 	-- check victory-rush is usable or not 
 
@@ -425,14 +455,14 @@ function module:FuryProc()
 		return VICTORY_RUSH
 	end
 
-	if self:IsUsableSpell(BLOODRAGE, 1, 1) and UnitPower("player") < 30 and incombat then
+	if self:IsUsableSpell(BLOODRAGE, 1, 1) and UnitPower("player") < 20 and incombat then
 		return BLOODRAGE
 	end
 
 	-- there might be the chance you will get aoe damage for the scar boss need to add additional logic here 
-	if self:IsUsableSpell(BERSERKER_RAGE, 1, 1) and incombat and istt then
-		return BERSERKER_RAGE
-	end
+	-- if self:IsUsableSpell(BERSERKER_RAGE, 1, 1) and incombat and istt then
+	-- 	return BERSERKER_RAGE
+	-- end
 
 	-- 单体状态
 	
@@ -442,34 +472,69 @@ function module:FuryProc()
 		-- 斩杀阶段
 		if hp < 20 then
 
-			if hp < 10 and not module:IsStrongTarget() or (hp < 5 and module:IsStrongTarget())then
+			local mainspeed, offhandspeed = UnitAttackSpeed("player")
+			-- 满怒斩杀>(怒气不够打嗜血旋风的)低怒斩杀>双慢旋风斩>嗜血>主慢副快旋风斩>高怒斩杀
+
+			-- if module:IsStrongTarget()  then
+			-- 	-- body
+			-- 	满怒斩杀
+			-- 	(怒气不够打嗜血旋风的)低怒斩杀
+			-- 	双慢旋风斩
+			-- 	嗜血
+			-- end
+			if hp < 7 and not module:IsStrongTarget() then
 				if self:IsUsableSpell(EXECUTE, 1, 1) then
 					return EXECUTE
 				end
 			end
 
-			if self:IsUsableSpell(WHIRLWIND, 1, 1) then
+			if hp < 5 and module:IsStrongTarget() then
+				if self:IsUsableSpell(EXECUTE, 1, 1) then
+					return EXECUTE
+				end
+			end
+
+			-- 满怒斩杀
+			if UnitPower("player") > 95 then
+				return EXECUTE
+			end
+
+			-- (怒气不够打嗜血旋风的)低怒斩杀
+			if self:IsUsableSpell(EXECUTE, 1, 1) and UnitPower("player") < 30  then
+				return EXECUTE
+			end
+
+			-- 下一刀大概率会溢出 挂英勇斩杀
+			if (swingtime + mainspeed - GetTime()) < 1.5 and UnitPower("player") > 75  then
+				return HERORIC_STRIKE, EXECUTE
+			end
+
+
+			-- 下一刀大概率会溢出 无脑斩杀
+			if (swingtime + mainspeed - GetTime()) < 1.5 and UnitPower("player") > 65  then
+				return EXECUTE
+			end
+
+			-- 双慢旋风斩
+			if offhandspeed > 2 and UnitPower("player") > 30 and self:IsUsableSpell(WHIRLWIND, 1, 1)  then
 				return WHIRLWIND
 			end
 
-			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and windCD > 4 then
-				return BLOODTHIRST
+			-- 嗜血
+			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 30 then
+				if offhandspeed > 2  then
+					if windCD > 1.5  then
+					-- body
+						return BLOODTHIRST
+					end
+				else
+					return BLOODTHIRST
+				end		
 			end
 
-			if self:IsUsableSpell(BLOODTHIRST, 1, 1)  and UnitPower("player") > 50 then
-				return BLOODTHIRST
-			end
-
-			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and windCD > 2 and UnitPower("player") > 25 then
-				return BLOODTHIRST
-			end
-		
-			if self:IsUsableSpell(BLOODTHIRST, 1, 1) then
-				return BLOODTHIRST
-			end
-		
-			if self:IsUsableSpell(EXECUTE, 1, 1) and btCD > 2 and windCD > 2  then
-				return EXECUTE
+			-- 主慢副快旋风斩
+			if offhandspeed < 1.8 and UnitPower("player") > 30 and self:IsUsableSpell(WHIRLWIND, 1, 1)  then
+				return WHIRLWIND
 			end
 
 		-- 非斩杀阶段
@@ -482,11 +547,11 @@ function module:FuryProc()
 				return BLOODTHIRST
 			end
 
-			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 50 then
+			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 55 then
 				return BLOODTHIRST
 			end
 
-			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and windCD > 2 and UnitPower("player") > 25 then
+			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and windCD > 3 and UnitPower("player") > 30 then
 				return BLOODTHIRST
 			end
 
@@ -506,13 +571,13 @@ function module:FuryProc()
 			return WHIRLWIND
 		end
 
-		if self:IsUsableSpell(SWEEPING_STRIKES, 1, 1) then
+		if self:IsUsableSpell(SWEEPING_STRIKES, 1, 1) and UnitPower("player") > 60 then
 			return SWEEPING_STRIKES
 		end
 
 		if self:PlayerBuff("横扫攻击") then
 			-- body
-			if self:CanAOEEexecute() and self:IsUsableSpell(EXECUTE, 1, 1) then 
+			if self:CanAOEEexecute() and self:IsUsableSpell(EXECUTE, 1, 1) then
 				return EXECUTE
 			end
 
@@ -520,7 +585,7 @@ function module:FuryProc()
 				return CLEAVE
 			end
 
-			if self:IsUsableSpell(CLEAVE, 1, 1) and UnitPower("player") > 25 and btCD > 1.5 and not IsCurrentSpell(25231) then
+			if self:IsUsableSpell(CLEAVE, 1, 1) and UnitPower("player") > 30 and btCD > 2 and not IsCurrentSpell(25231) then
 				return CLEAVE
 			end
 
@@ -532,7 +597,7 @@ function module:FuryProc()
 				return WHIRLWIND
 			end
 
-			if self:IsUsableSpell(WHIRLWIND, 1, 1) and UnitPower("player") > 50  and not IsCurrentSpell(25231) and btCD > 1.5 then
+			if self:IsUsableSpell(WHIRLWIND, 1, 1) and UnitPower("player") > 55  and not IsCurrentSpell(25231) and btCD > 3 then
 				return WHIRLWIND
 			end
 
@@ -542,7 +607,7 @@ function module:FuryProc()
 					return CLEAVE
 				end
 
-				if self:IsUsableSpell(CLEAVE, 1, 1) and UnitPower("player") > 25 and windCD > 1.5 and not IsCurrentSpell(25231) then
+				if self:IsUsableSpell(CLEAVE, 1, 1) and UnitPower("player") > 30 and windCD > 3 and not IsCurrentSpell(25231) then
 					return CLEAVE
 				end
 
@@ -550,11 +615,11 @@ function module:FuryProc()
 					return WHIRLWIND
 				end
 
-				if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 75  then
+				if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 80  then
 					return BLOODTHIRST
 				end
 
-				if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 50  and not IsCurrentSpell(25231) and windCD > 1.5 then
+				if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 55  and not IsCurrentSpell(25231) and windCD > 2 then
 					return BLOODTHIRST
 				end
 			end
@@ -565,13 +630,17 @@ function module:FuryProc()
 
 	if incombat and self:InMelee() and self:CanAE4() then
 
-		if self:IsUsableSpell(SWEEPING_STRIKES, 1, 1) then
+		if self:IsUsableSpell(WHIRLWIND, 1, 1) and self:IsUsableSpell(SWEEPING_STRIKES, 1, 1) then
+			return WHIRLWIND
+		end
+
+		if self:IsUsableSpell(SWEEPING_STRIKES, 1, 1) and UnitPower("player") > 55 then
 			return SWEEPING_STRIKES
 		end
 
 		if self:PlayerBuff("横扫攻击") then
 			-- body
-			if self:CanAOEEexecute() and self:IsUsableSpell(EXECUTE, 1, 1) then 
+			if self:CanAOEEexecute() and self:IsUsableSpell(EXECUTE, 1, 1) then
 				return EXECUTE
 			end
 
@@ -589,7 +658,7 @@ function module:FuryProc()
 				return BLOODTHIRST
 			end
 
-			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 50  and not IsCurrentSpell(25231) and windCD > 1.5 then
+			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 60  and not IsCurrentSpell(25231) and windCD > 2 then
 				return BLOODTHIRST
 			end
 		else
@@ -598,7 +667,7 @@ function module:FuryProc()
 					return CLEAVE
 				end
 
-				if self:IsUsableSpell(CLEAVE, 1, 1) and UnitPower("player") > 25 and windCD > 1.5 and not IsCurrentSpell(25231) then
+				if self:IsUsableSpell(CLEAVE, 1, 1) and UnitPower("player") > 30 and windCD > 2 and not IsCurrentSpell(25231) then
 					return CLEAVE
 				end
 
@@ -610,7 +679,7 @@ function module:FuryProc()
 					return BLOODTHIRST
 				end
 
-				if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 50  and not IsCurrentSpell(25231) and windCD > 1.5 then
+				if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 55  and not IsCurrentSpell(25231) and windCD > 2 then
 					return BLOODTHIRST
 				end
 			end	
@@ -857,23 +926,34 @@ end
 
 function module:pvpwarrior()
 
-	if self:IsUsableSpell(HERORIC_STRIKE, 1, 1) and UnitPower("player") > 90 then
-		return HERORIC_STRIKE
-	end
+	-- if self:IsUsableSpell(HERORIC_STRIKE, 1, 1) and UnitPower("player") > 90 then
+	-- 	return HERORIC_STRIKE
+	-- end
 	
 	-- if self:Canop() and UnitPower("player") < 26 and UnitPower("player") > 4 and GetShapeshiftFormID() ~= 17 then
 	-- 	return BATTLE_STANCE
 	-- end
 
-	--压制可用，施放压制
-	if self:IsUsableSpell(OVERPOWER) then
-		return OVERPOWER
+	-- --压制可用，施放压制
+	-- if self:IsUsableSpell(OVERPOWER) then
+	-- 	return OVERPOWER
+	-- end
+
+-- --如果不在战斗状态，且在战斗姿态，施放冲锋
+-- 	if not incombat and self:IsUsableSpell(CHARGE) then
+-- 		return CHARGE
+-- 	end
+
+-- 致残毒药 3421
+--没有断筋debuff则施放断筋
+	local leftime, _ = self:UnitAuraTime("target", HAMSTRING, true)
+	if  leftime < 3 and not self:TargetDebuff(cripplingpPoison) and self:IsUsableSpell(HAMSTRING, 1, 1) and UnitPower("player") > 7 then            
+		return HAMSTRING
 	end
 
---如果不在战斗状态，且在战斗姿态，施放冲锋
-  if not incombat and self:IsUsableSpell(CHARGE) then
-    return CHARGE
-  end
+	if not self:TargetDebuff(HAMSTRING) and not self:TargetDebuff(cripplingpPoison) and self:IsUsableSpell(HAMSTRING, 1, 1) and UnitPower("player") > 7 then            
+		return HAMSTRING
+	end
 
 --触发乘胜追击优先使用乘胜追击  
 	if self:IsUsableSpell(VICTORY_RUSH) then
@@ -881,35 +961,32 @@ function module:pvpwarrior()
 	end  
 
 --没有致死debuff且怒气>29,则施放致死打击	
-  if  not self:TargetDebuff(zhisidaji) and UnitPower("player") > 29 then
+	if not self:TargetDebuff(zhisidaji) and UnitPower("player") > 29 then
 		return zhisidaji
 	end	
 
 
---有致死debuff，斩杀可用，怒气>13，施放斩杀	
-	if self:TargetDebuff(zhisidaji) and self:IsUsableSpell(EXECUTE) and UnitPower("player") > 13 then
-		return EXECUTE
-	end
+-- --有致死debuff，斩杀可用，怒气>13，施放斩杀	
+-- 	if self:TargetDebuff(zhisidaji) and self:IsUsableSpell(EXECUTE) and UnitPower("player") > 13 then
+-- 		return EXECUTE
+-- 	end
 
---有致死debuff，致死打击可用，怒气>29，施放致死打击		
-  if self:TargetDebuff(zhisidaji) and self:IsUsableSpell(zhisidaji, 1) and UnitPower("player") > 29 then
-		return zhisidaji
-	end	
+-- --有致死debuff，致死打击可用，怒气>29，施放致死打击		
+-- 	if self:TargetDebuff(zhisidaji) and self:IsUsableSpell(zhisidaji, 1) and UnitPower("player") > 29 then
+-- 		return zhisidaji
+-- 	end	
 
---没有断筋debuff则施放断筋
-  if not self:TargetDebuff(HAMSTRING) and self:IsUsableSpell(HAMSTRING, 1, 1) and UnitPower("player") > 7 then            
-    return HAMSTRING
-  end
 
---有致死debuff，旋风斩可用，怒气>25，施放旋风斩
-		if self:TargetDebuff(zhisidaji) and self:IsUsableSpell(WHIRLWIND) and UnitPower("player") > 25 then
-		return WHIRLWIND
-	end	
 
---有致死debuff，没有破甲debuff，怒气>15，使用破甲攻击
-  if self:TargetDebuff(zhisidaji) and self:TargetDebuffStack(SUNDER_ARMOR) < 3 and UnitPower("player") > 15 then            
-  return SUNDER_ARMOR
-  end	
+-- --有致死debuff，旋风斩可用，怒气>25，施放旋风斩
+-- 	if self:TargetDebuff(zhisidaji) and self:IsUsableSpell(WHIRLWIND) and UnitPower("player") > 25 then
+-- 		return WHIRLWIND
+-- 	end	
+
+-- --有致死debuff，没有破甲debuff，怒气>15，使用破甲攻击
+-- 	if self:TargetDebuff(zhisidaji) and self:TargetDebuffStack(SUNDER_ARMOR) < 3 and UnitPower("player") > 15 then            
+-- 		return SUNDER_ARMOR
+-- 	end	
 end
 
 function module:OnSpellRequest(spec, strongTarget)
