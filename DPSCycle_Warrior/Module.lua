@@ -43,6 +43,7 @@ local EXECUTE = GetSpellInfo(25236)
 local EXPOSE_ARMOR = GetSpellInfo(8647)
 local FLURRY = GetSpellInfo(12319)
 
+local range5Table = { }
 
 -- 断筋
 local HAMSTRING = GetSpellInfo(25212)
@@ -357,16 +358,6 @@ function module:FuryHS()
 	return self:FuryProc()
 end
 
--- 第一次修改 主要针对的双持狂暴战士
-function module:FuryProc()
-
-	-- this logic will be triggered when you equip the weapon in offhand 
-	local istt = UnitIsUnit("targettarget", "player")
-	local hp = self:UnitHealthPercent("target")
-	local ihp = self:UnitHealthPercent("player")
-	local chargeCD = self:GetSpellCooldown(CHARGE)
-	local btCD, _, _,BTEnabled = self:GetSpellCooldown(BLOODTHIRST)
-	local windCD, _, _,windCDEnabled = self:GetSpellCooldown(WHIRLWIND)
 	-- local _, _, _, _, fennuzhangwo = GetTalentInfo(1, 8)
 	-- local base, posBuff, negBuff = UnitAttackPower("player")
 	-- local playerAP = base + posBuff + negBuff;
@@ -396,61 +387,111 @@ function module:FuryProc()
 	-- 	return BERSERKER_STANCE
 	-- end
 
-	-- highest level heroric strike 29707
-	if not self:CanAE() and hp > 20 and not IsCurrentSpell(29707) then
 
-		if self:IsUsableSpell(HERORIC_STRIKE, 1, 1) and UnitPower("player") > 70 then
-			return HERORIC_STRIKE
-		end
+function module:isAggressive()
 
+	local mainspeed, offhandspeed = UnitAttackSpeed("player")
+
+	if not swingtime then
+		swingtime = 0
+	end
+
+	print("swingtime" .. swingtime)
+	if swingtime + mainspeed - GetTime() < 1.5 then
+		return 1
+	else
+		return nil
+	end
+end
+
+
+function module:nextOffhandExpectRange()
+
+	
+	
+-- Hit factor
+-- Weapon	     Hit type	     f
+-- Main Hand	Normal Hit	    3.5
+-- Main Hand	Critical Hit	7.0
+-- Off Hand	    Normal Hit	    1.75
+-- Off Hand	    Critical Hit	3.5
+
+
+	-- 7.5*(制造的伤害)/274.7 + f*speed/2
+
+
+	local mainspeed, offhandspeed = UnitAttackSpeed("player")
+	local lowDmg, hiDmg, offlowDmg, offhiDmg, posBuff, negBuff, percentmod = UnitDamage('player')
+	local avgDmg =( offlowDmg+offhiDmg)/2 --平均伤害
+	
+	local offhandrange = 7.5*avgDmg/274.7 + 2.5*offhandspeed/2
+
+	local leng=0
+	local last5offhandrage = 0
+	for k, v in pairs(range5Table) do
+		leng=leng+1
+	end
+
+	if leng == 5 then
+		table.remove(range5Table, 1 )
+	end
+	
+	print("111111" .. offhandrange)
+	table.insert(range5Table, offhandrange )
+
+	for k, v in pairs(range5Table) do
+		-- print ("index:" .. k .. "-----" .. v)
+		last5offhandrage=last5offhandrage+v
+	end
+
+	-- print("33333：：：" .. last5offhandrage/leng)
+	return last5offhandrage/leng
+
+
+
+end
+-- 第一次修改 主要针对的双持狂暴战士
+function module:FuryProc()
+
+	-- this logic will be triggered when you equip the weapon in offhand 
+	local istt = UnitIsUnit("targettarget", "player")
+	local hp = self:UnitHealthPercent("target")
+	local ihp = self:UnitHealthPercent("player")
+	local chargeCD = self:GetSpellCooldown(CHARGE)
+	local btCD, _, _,BTEnabled = self:GetSpellCooldown(BLOODTHIRST)
+	local windCD, _, _,windCDEnabled = self:GetSpellCooldown(WHIRLWIND)
+
+
+	
+	-- -- highest level heroric strike 29707
+	-- if not self:CanAE() and hp > 20 and not IsCurrentSpell(29707) then
+	-- -- if not self:CanAE() and not IsCurrentSpell(29707) then
+	-- 	if self:IsUsableSpell(HERORIC_STRIKE, 1, 1) and UnitPower("player") > 70 then
+	-- 		-- show BLOODTHIRST and WHIRLWIND as well if they are not in CD
+	-- 		if self:IsUsableSpell(WHIRLWIND, 1, 1) then
+	-- 			-- body
+	-- 			return HERORIC_STRIKE, WHIRLWIND
+	-- 		elseif self:IsUsableSpell(BLOODTHIRST, 1, 1)  then
+	-- 			-- body
+	-- 			return HERORIC_STRIKE, BLOODTHIRST
+	-- 		end
+	-- 		return HERORIC_STRIKE
+	-- 	end
+
+	-- 	if self:isAggressive() and self:IsUsableSpell(HERORIC_STRIKE, 1, 1) and (UnitPower("player") -12 + self:nextOffhandExpectRange()) > 25 then
+	-- 		-- show BLOODTHIRST and WHIRLWIND as well if they are not in CD
+	-- 		return HERORIC_STRIKE		
+	-- 	end
+
+		
 			
-		if self:IsUsableSpell(HERORIC_STRIKE, 1, 1) and UnitPower("player") > 35 and btCD > 1.5 and windCD > 1.5  then
-			return HERORIC_STRIKE
-		end
-	end
-
--- when to perform HAMSTRING and OVERPOWER
-	if not self:CanAE()  and hp > 20 then
-
-		if  self:IsUsableSpell(HAMSTRING, 1, 1)  and not self:PlayerBuff("乱舞") and UnitPower("player") > 80 and btCD > 1.5 and windCD > 1.5  then
-			return HAMSTRING
-		end
-		local mainspeed, offhandspeed = UnitAttackSpeed("player")
-		-- print("offhandspeed:".. offhandspeed)
-		if offhandspeed < 1.5 then
-			-- body
-			if  self:IsUsableSpell(HAMSTRING, 1, 1)  and UnitPower("player") > 40 and btCD > 1.5 and windCD > 1.5  then
-				return HAMSTRING
-			end
-		else
-			-- body
-			if  self:IsUsableSpell(HAMSTRING, 1, 1)  and UnitPower("player") > 50 and btCD > 1.5 and windCD > 1.5  then
-				return HAMSTRING
-			end
-		end
-
-
-		if self:Canop() and self:IsUsableSpell(OVERPOWER, 1, 1) and UnitPower("player") < 15 and btCD > 3 and windCD > 3 then
-			return OVERPOWER
-		end
-
-	end
-
-
-	if incombat and GetShapeshiftFormID() ~= 19 then
-		return BERSERKER_STANCE
-	end
-
-	if  GetShapeshiftFormID() ~= 19 then
-		return BERSERKER_STANCE
-	end
-
-	-- if self:PlayerBuffTime(BATTLE_SHOUT) < 3 then
-	-- 	return BATTLE_SHOUT
+	-- 	-- if self:IsUsableSpell(HERORIC_STRIKE, 1, 1) and UnitPower("player") > 40 and btCD > 1.5 and windCD > 1.5  then
+	-- 	-- 	return HERORIC_STRIKE	
+	-- 	-- end
 	-- end
 
-	-- check victory-rush is usable or not 
 
+	
 	if self:IsUsableSpell(VICTORY_RUSH, 1) then
 		return VICTORY_RUSH
 	end
@@ -459,36 +500,72 @@ function module:FuryProc()
 		return BLOODRAGE
 	end
 
+	-- when to perform HAMSTRING and OVERPOWER
+	if not self:CanAE()  and hp > 20 then
+	-- if not self:CanAE() then
+
+		if self:Canop() and self:IsUsableSpell(OVERPOWER, 1, 1) and UnitPower("player") < 10  then
+			return OVERPOWER
+		end
+
+		if btCD > 2 and windCD > 2 then
+			-- body
+		
+			if  self:IsUsableSpell(HAMSTRING, 1, 1)  and UnitPower("player") > 30 then
+				if not IsCurrentSpell(29707) then 
+					return HAMSTRING,HERORIC_STRIKE
+				else
+					return HAMSTRING
+				end
+			end	
+			if self:isAggressive() and self:IsUsableSpell(HERORIC_STRIKE, 1, 1) and (UnitPower("player") -12 + self:nextOffhandExpectRange()) > 10 then
+				-- show BLOODTHIRST and WHIRLWIND as well if they are not in CD
+				if not IsCurrentSpell(29707) then 
+					return HAMSTRING,HERORIC_STRIKE
+				else
+					return HAMSTRING
+				end
+			end
+		end
+
+		-- print("offhandspeed:".. offhandspeed)
+
+	end
+
+
+	-- if incombat and GetShapeshiftFormID() ~= 19 then
+	-- 	return BERSERKER_STANCE
+	-- end
+
+	-- if self:PlayerBuffTime(BATTLE_SHOUT) < 3 then
+	-- 	return BATTLE_SHOUT
+	-- end
+
+	-- check victory-rush is usable or not 
+
+
 	-- there might be the chance you will get aoe damage for the scar boss need to add additional logic here 
 	-- if self:IsUsableSpell(BERSERKER_RAGE, 1, 1) and incombat and istt then
 	-- 	return BERSERKER_RAGE
 	-- end
 
 	-- 单体状态
-	
+	-- print("2222222" .. self:nextOffhandExpectRange())
+
 	if incombat and self:InMelee() and not self:CanAE() then
-		
 		
 		-- 斩杀阶段
 		if hp < 20 then
-
-			local mainspeed, offhandspeed = UnitAttackSpeed("player")
+			
 			-- 满怒斩杀>(怒气不够打嗜血旋风的)低怒斩杀>双慢旋风斩>嗜血>主慢副快旋风斩>高怒斩杀
 
-			-- if module:IsStrongTarget()  then
-			-- 	-- body
-			-- 	满怒斩杀
-			-- 	(怒气不够打嗜血旋风的)低怒斩杀
-			-- 	双慢旋风斩
-			-- 	嗜血
-			-- end
 			if hp < 7 and not module:IsStrongTarget() then
 				if self:IsUsableSpell(EXECUTE, 1, 1) then
 					return EXECUTE
 				end
 			end
 
-			if hp < 5 and module:IsStrongTarget() then
+			if hp < 4 and module:IsStrongTarget() then
 				if self:IsUsableSpell(EXECUTE, 1, 1) then
 					return EXECUTE
 				end
@@ -500,30 +577,32 @@ function module:FuryProc()
 			end
 
 			-- (怒气不够打嗜血旋风的)低怒斩杀
-			if self:IsUsableSpell(EXECUTE, 1, 1) and UnitPower("player") < 30  then
+			if self:IsUsableSpell(EXECUTE, 1, 1) and UnitPower("player") < 25  then
 				return EXECUTE
 			end
 
+			-- print("时间".. swingtime + mainspeed - GetTime())
 			-- 下一刀大概率会溢出 挂英勇斩杀
-			if (swingtime + mainspeed - GetTime()) < 1.5 and UnitPower("player") > 75  then
-				return HERORIC_STRIKE, EXECUTE
+			if  self:isAggressive() and UnitPower("player") > 70  then
+				return EXECUTE,HERORIC_STRIKE
 			end
 
 
 			-- 下一刀大概率会溢出 无脑斩杀
-			if (swingtime + mainspeed - GetTime()) < 1.5 and UnitPower("player") > 65  then
+			if  self:isAggressive() and UnitPower("player") > 60  then
 				return EXECUTE
 			end
 
+			local mainspeed, offhandspeed = UnitAttackSpeed("player")
 			-- 双慢旋风斩
-			if offhandspeed > 2 and UnitPower("player") > 30 and self:IsUsableSpell(WHIRLWIND, 1, 1)  then
+			if offhandspeed > 1.8 and UnitPower("player") > 25 and self:IsUsableSpell(WHIRLWIND, 1, 1)  then
 				return WHIRLWIND
 			end
 
 			-- 嗜血
 			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 30 then
-				if offhandspeed > 2  then
-					if windCD > 1.5  then
+				if offhandspeed > 1.5  then
+					if windCD > 2  then
 					-- body
 						return BLOODTHIRST
 					end
@@ -533,30 +612,135 @@ function module:FuryProc()
 			end
 
 			-- 主慢副快旋风斩
-			if offhandspeed < 1.8 and UnitPower("player") > 30 and self:IsUsableSpell(WHIRLWIND, 1, 1)  then
+			if offhandspeed < 1.4 and UnitPower("player") > 25 and self:IsUsableSpell(WHIRLWIND, 1, 1)  then
 				return WHIRLWIND
+			end
+
+			-- 满怒斩杀
+			if UnitPower("player") > 60 then
+				return EXECUTE
 			end
 
 		-- 非斩杀阶段
 		elseif hp > 20 then
-			if self:IsUsableSpell(WHIRLWIND, 1, 1) then
-				return WHIRLWIND
-			end
+
+			if IsCurrentSpell(29707) then 
+
+				if self:IsUsableSpell(WHIRLWIND, 1, 1) then
+					return WHIRLWIND
+				end
+				
+				if windCD > 2 then
+					-- body
+					if self:IsUsableSpell(BLOODTHIRST, 1, 1) then
+						return BLOODTHIRST
+					end
+				else
+					if self:isAggressive() then
+						if self:IsUsableSpell(BLOODTHIRST, 1, 1) and (UnitPower("player") + self:nextOffhandExpectRange()) > 67 then
+							return BLOODTHIRST
+						end
+					else
+						if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player")> 67 then
+							return BLOODTHIRST
+						end						
+					end
+				end
+
+				-- if self:IsUsableSpell(BLOODTHIRST, 1, 1) then
+				-- 	return BLOODTHIRST
+				-- end
+			else
+
+				if self:IsUsableSpell(WHIRLWIND, 1, 1) then
+
+					if  UnitPower("player") > 67 then
+						return WHIRLWIND,HERORIC_STRIKE
+					end
+					if btCD > 2 then
+						if self:IsUsableSpell(HERORIC_STRIKE, 1, 1) and UnitPower("player")  > 37 then
+							return WHIRLWIND,HERORIC_STRIKE
+						end
+					else
+						if self:isAggressive() then
+							if (UnitPower("player") + self:nextOffhandExpectRange()) > 67 then
+								return WHIRLWIND,HERORIC_STRIKE
+							elseif (UnitPower("player") + self:nextOffhandExpectRange()) > 55 then
+								return WHIRLWIND
+							end
+						else
+							if UnitPower("player") > 67 then
+								return WHIRLWIND,HERORIC_STRIKE
+							elseif UnitPower("player") > 55 then
+								return WHIRLWIND
+							end							
+						end
+					end
+					return WHIRLWIND
+				end
+				
+				if windCD > 2 then
+					-- body
+					-- BLOODTHIRST?
+					-- BLOODTHIRST,HERORIC_STRIKE?
+
+					if  self:IsUsableSpell(BLOODTHIRST, 1, 1)  and UnitPower("player") > 42 then
+						return BLOODTHIRST,HERORIC_STRIKE
+					end
+					if  self:IsUsableSpell(BLOODTHIRST, 1, 1)  and UnitPower("player") > 30 then
+						return BLOODTHIRST
+					end
+
+					if btCD > 2 then
+						if UnitPower("player") > 12 then
+							return HERORIC_STRIKE
+						end
+					else
+						if self:isAggressive() then
+							if  (UnitPower("player") + self:nextOffhandExpectRange()) > 42 then
+								return HERORIC_STRIKE
+							end
+						else
+							if  UnitPower("player") > 42 then
+								return HERORIC_STRIKE
+							end						
+						end							
+					end
+
+				else --旋风斩还差2秒准备就绪 
+
+					-- BLOODTHIRST?
+					-- BLOODTHIRST,HERORIC_STRIKE?
+					-- HERORIC_STRIKE?
+					if self:IsUsableSpell(BLOODTHIRST, 1, 1) then 
+						if self:isAggressive() then
+							if  (UnitPower("player") + self:nextOffhandExpectRange()) > 67 then
+								return BLOODTHIRST,HERORIC_STRIKE
+
+							elseif (UnitPower("player") + self:nextOffhandExpectRange()) > 55 then 
+								return BLOODTHIRST
+							end
+						else
+							if  UnitPower("player") > 67 then
+								return BLOODTHIRST,HERORIC_STRIKE
+							elseif  UnitPower("player") > 55 then
+								return BLOODTHIRST
+							end						
+						end		
+					else --嗜血cd没好 且旋风还剩2秒就好 只需要判断是否释放英勇
+						if self:isAggressive() then
+							if  (UnitPower("player") + self:nextOffhandExpectRange()) > 37 then
+								return HERORIC_STRIKE
+							end
+						else
+							if  UnitPower("player") > 37 then
+								return HERORIC_STRIKE
+							end						
+						end	
+					end
+
+				end
 			
-			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and windCD > 4 then
-				return BLOODTHIRST
-			end
-
-			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 55 then
-				return BLOODTHIRST
-			end
-
-			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and windCD > 3 and UnitPower("player") > 30 then
-				return BLOODTHIRST
-			end
-
-			if self:IsUsableSpell(BLOODTHIRST, 1, 1) then
-				return BLOODTHIRST
 			end
 		end
 	end
@@ -571,7 +755,7 @@ function module:FuryProc()
 			return WHIRLWIND
 		end
 
-		if self:IsUsableSpell(SWEEPING_STRIKES, 1, 1) and UnitPower("player") > 60 then
+		if self:IsUsableSpell(SWEEPING_STRIKES, 1, 1) and UnitPower("player") > 40 then
 			return SWEEPING_STRIKES
 		end
 
@@ -580,48 +764,226 @@ function module:FuryProc()
 			if self:CanAOEEexecute() and self:IsUsableSpell(EXECUTE, 1, 1) then
 				return EXECUTE
 			end
-
-			if self:IsUsableSpell(CLEAVE, 1, 1) and UnitPower("player") > 50 and not IsCurrentSpell(25231) then
-				return CLEAVE
-			end
-
-			if self:IsUsableSpell(CLEAVE, 1, 1) and UnitPower("player") > 30 and btCD > 2 and not IsCurrentSpell(25231) then
-				return CLEAVE
-			end
+	
+			-- return BLOODTHIRST
+			-- return BLOODTHIRST,CLEAVE
+			-- return CLEAVE
+			-- return WHIRLWIND,CLEAVE
+			-- return WHIRLWIND
 
 			if self:IsUsableSpell(BLOODTHIRST, 1, 1) then
-				return BLOODTHIRST
-			end
+				if IsCurrentSpell(25231) then
+					if self:IsUsableSpell(BLOODTHIRST, 1, 1) then
+						return BLOODTHIRST
+					end
+				else
 
-			if self:IsUsableSpell(WHIRLWIND, 1, 1) and UnitPower("player") > 75  then
-				return WHIRLWIND
-			end
+					if self:isAggressive() then
+						if  (UnitPower("player") + self:nextOffhandExpectRange()) > 50 then
+							return BLOODTHIRST,CLEAVE
 
-			if self:IsUsableSpell(WHIRLWIND, 1, 1) and UnitPower("player") > 55  and not IsCurrentSpell(25231) and btCD > 3 then
-				return WHIRLWIND
-			end
+						elseif (UnitPower("player") + self:nextOffhandExpectRange()) > 30 then 
+							return BLOODTHIRST
+						end
+					else
+						if  UnitPower("player") > 50 then
+							return BLOODTHIRST,CLEAVE
+						elseif  UnitPower("player") > 30 then
+							return BLOODTHIRST
+						end						
+					end	
+				end
+			else --嗜血不可用
+				if IsCurrentSpell(25231)then
+					if btCD > 2 then
+						if self:IsUsableSpell(WHIRLWIND, 1, 1) then
+							return WHIRLWIND
+						end
+					else
+
+						if self:IsUsableSpell(WHIRLWIND, 1, 1) then
+							if self:isAggressive() then
+								if  (UnitPower("player") + self:nextOffhandExpectRange()) > 75 then
+									return WHIRLWIND
+								end
+							else
+								if  UnitPower("player") > 75 then
+									return WHIRLWIND
+								end						
+							end	
+							
+						end					
+					end
+					
+				else --顺劈没在队列
+					if btCD > 2 then
+						if self:IsUsableSpell(WHIRLWIND, 1, 1) then
+							if self:isAggressive() then
+								if  (UnitPower("player") + self:nextOffhandExpectRange()) > 45 then
+									return WHIRLWIND,CLEAVE
+		
+								elseif (UnitPower("player") + self:nextOffhandExpectRange()) > 20 then 
+									return CLEAVE
+								end
+							else
+								if  UnitPower("player") > 45 then
+									return WHIRLWIND,CLEAVE
+								elseif  UnitPower("player") > 20 then
+									return CLEAVE
+								end						
+							end	
+							
+						else
+							if self:IsUsableSpell(CLEAVE, 1, 1) then
+								return CLEAVE
+							end
+						end
+					else --嗜血＜2秒 但是没好
+
+						if self:IsUsableSpell(WHIRLWIND, 1, 1) then
+							if self:isAggressive() then
+								if  (UnitPower("player") + self:nextOffhandExpectRange()) > 75 then
+									return WHIRLWIND,CLEAVE
+		
+								elseif (UnitPower("player") + self:nextOffhandExpectRange()) > 50 then 
+									return CLEAVE
+								end
+							else
+								if  UnitPower("player") > 75 then
+									return WHIRLWIND,CLEAVE
+								elseif  UnitPower("player") > 50 then
+									return CLEAVE
+								end						
+							end	
+							
+						else
+							if self:isAggressive() then
+								if  (UnitPower("player") + self:nextOffhandExpectRange()) > 50 then
+									return CLEAVE
+								end
+							else
+								if  UnitPower("player") > 50 then
+									return CLEAVE
+								end						
+							end	
+						end		
+					end
+
+
+				end
+			end	-- body
 
 		else
+				-- 没有横扫 但是还是aoe
+					-- 旋风斩》顺劈》嗜血
 			if not self:IsUsableSpell(SWEEPING_STRIKES, 1) then
-				if self:IsUsableSpell(CLEAVE, 1, 1) and UnitPower("player") > 50 and not IsCurrentSpell(25231) then
-					return CLEAVE
-				end
-
-				if self:IsUsableSpell(CLEAVE, 1, 1) and UnitPower("player") > 30 and windCD > 3 and not IsCurrentSpell(25231) then
-					return CLEAVE
-				end
+			-- return BLOODTHIRST
+			-- return BLOODTHIRST,CLEAVE
+			-- return CLEAVE
+			-- return WHIRLWIND,CLEAVE
+			-- return WHIRLWIND
 
 				if self:IsUsableSpell(WHIRLWIND, 1, 1) then
-					return WHIRLWIND
-				end
+					if IsCurrentSpell(25231) then
+						if self:IsUsableSpell(WHIRLWIND, 1, 1) then
+							return WHIRLWIND
+						end
+					else
 
-				if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 80  then
-					return BLOODTHIRST
-				end
+						if self:isAggressive() then
+							if  (UnitPower("player") + self:nextOffhandExpectRange()) > 45 then
+								return WHIRLWIND,CLEAVE
 
-				if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 55  and not IsCurrentSpell(25231) and windCD > 2 then
-					return BLOODTHIRST
-				end
+							elseif (UnitPower("player") + self:nextOffhandExpectRange()) > 25 then 
+								return WHIRLWIND
+							end
+						else
+							if  UnitPower("player") > 45 then
+								return WHIRLWIND,CLEAVE
+							elseif  UnitPower("player") > 25 then
+								return WHIRLWIND
+							end						
+						end	
+					end
+				else --旋风不可用
+					if IsCurrentSpell(25231)then
+						if windCD > 2 then
+							if self:IsUsableSpell(BLOODTHIRST, 1, 1) then
+								return BLOODTHIRST
+							end
+						else
+
+							if self:IsUsableSpell(BLOODTHIRST, 1, 1) then
+								if self:isAggressive() then
+									if  (UnitPower("player") + self:nextOffhandExpectRange()) > 75 then
+										return BLOODTHIRST
+									end
+								else
+									if  UnitPower("player") > 75 then
+										return BLOODTHIRST
+									end						
+								end	
+								
+							end					
+						end
+						
+					else --顺劈没在队列
+						if windCD > 2 then
+							if self:IsUsableSpell(BLOODTHIRST, 1, 1) then
+								if self:isAggressive() then
+									if  (UnitPower("player") + self:nextOffhandExpectRange()) > 50 then
+										return BLOODTHIRST,CLEAVE
+			
+									elseif (UnitPower("player") + self:nextOffhandExpectRange()) > 20 then 
+										return CLEAVE
+									end
+								else
+									if  UnitPower("player") > 50 then
+										return BLOODTHIRST,CLEAVE
+									elseif  UnitPower("player") > 20 then
+										return CLEAVE
+									end						
+								end	
+								
+							else
+								if self:IsUsableSpell(CLEAVE, 1, 1) then
+									return CLEAVE
+								end
+							end
+						else --旋风＜2秒 但是没好
+
+							if self:IsUsableSpell(BLOODTHIRST, 1, 1) then
+								if self:isAggressive() then
+									if  (UnitPower("player") + self:nextOffhandExpectRange()) > 75 then
+										return BLOODTHIRST,CLEAVE
+			
+									elseif (UnitPower("player") + self:nextOffhandExpectRange()) > 45 then 
+										return CLEAVE
+									end
+								else
+									if  UnitPower("player") > 75 then
+										return BLOODTHIRST,CLEAVE
+									elseif  UnitPower("player") > 45 then
+										return CLEAVE
+									end						
+								end	
+								
+							else
+								if self:isAggressive() then
+									if  (UnitPower("player") + self:nextOffhandExpectRange()) > 45 then
+										return CLEAVE
+									end
+								else
+									if  UnitPower("player") > 45 then
+										return CLEAVE
+									end						
+								end	
+							end		
+						end
+
+
+					end
+				end	-- body				
 			end
 		end
 	end
@@ -634,54 +996,185 @@ function module:FuryProc()
 			return WHIRLWIND
 		end
 
-		if self:IsUsableSpell(SWEEPING_STRIKES, 1, 1) and UnitPower("player") > 55 then
+		if self:IsUsableSpell(SWEEPING_STRIKES, 1, 1) and UnitPower("player") > 50 then
 			return SWEEPING_STRIKES
 		end
 
 		if self:PlayerBuff("横扫攻击") then
 			-- body
-			if self:CanAOEEexecute() and self:IsUsableSpell(EXECUTE, 1, 1) then
-				return EXECUTE
-			end
+			-- 顺劈＞旋风斩＞嗜血
 
-			if self:IsUsableSpell(CLEAVE, 1, 1) and UnitPower("player") > 25 and not IsCurrentSpell(25231) then
-				return CLEAVE
-			end
+			-- return CLEAVE
+			-- return WHIRLWIND,CLEAVE
+			-- return BLOODTHIRST,CLEAVE
 
+			if  IsCurrentSpell(25231)  then
+				if self:IsUsableSpell(WHIRLWIND, 1) then
+					if self:isAggressive() then
+						if  (UnitPower("player") + self:nextOffhandExpectRange()) > 45 then
+							return WHIRLWIND
+						end
+					else
+						if  UnitPower("player") > 45 then
+							return WHIRLWIND
+						end						
+					end	
+
+				else
+					if self:IsUsableSpell(BLOODTHIRST, 1) then
+						if self:isAggressive() then
+							if  (UnitPower("player") + self:nextOffhandExpectRange()) > 50 then
+								return BLOODTHIRST
+							end
+						else
+							if  UnitPower("player") > 50 then
+								return BLOODTHIRST
+							end						
+						end	
+					end
+				end
+			else --顺劈不在队列
+				if self:IsUsableSpell(WHIRLWIND, 1) then
+					if self:isAggressive() then
+						if  (UnitPower("player") + self:nextOffhandExpectRange()) > 45 then
+							return WHIRLWIND,CLEAVE
+
+						elseif (UnitPower("player") + self:nextOffhandExpectRange()) > 20 then 
+							return CLEAVE
+						end
+					else
+						if  UnitPower("player") > 45 then
+							return WHIRLWIND,CLEAVE
+						elseif  UnitPower("player") > 20 then
+							return CLEAVE
+						end						
+					end	
+
+				else
+					if self:IsUsableSpell(BLOODTHIRST, 1) then
+						if self:isAggressive() then
+							if  (UnitPower("player") + self:nextOffhandExpectRange()) > 50 then
+								return BLOODTHIRST,CLEAVE
+	
+							elseif (UnitPower("player") + self:nextOffhandExpectRange()) > 20 then 
+								return CLEAVE
+							end
+						else
+							if  UnitPower("player") > 50 then
+								return BLOODTHIRST,CLEAVE
+							elseif  UnitPower("player") > 20 then
+								return CLEAVE
+							end						
+						end	
+					else
+						return CLEAVE
+					end
+				end		
+			end
 			
-			if self:IsUsableSpell(WHIRLWIND, 1, 1) and UnitPower("player") > 50  and not IsCurrentSpell(25231) then
-				return WHIRLWIND
-			end
-
-
-			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 75  then
-				return BLOODTHIRST
-			end
-
-			if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 60  and not IsCurrentSpell(25231) and windCD > 2 then
-				return BLOODTHIRST
-			end
 		else
 			if not self:IsUsableSpell(SWEEPING_STRIKES, 1) then
-				if self:IsUsableSpell(CLEAVE, 1, 1) and UnitPower("player") > 50 and not IsCurrentSpell(25231) then
-					return CLEAVE
-				end
-
-				if self:IsUsableSpell(CLEAVE, 1, 1) and UnitPower("player") > 30 and windCD > 2 and not IsCurrentSpell(25231) then
-					return CLEAVE
-				end
-
 				if self:IsUsableSpell(WHIRLWIND, 1, 1) then
-					return WHIRLWIND
-				end
+					if IsCurrentSpell(25231) then
+						if self:IsUsableSpell(WHIRLWIND, 1, 1) then
+							return WHIRLWIND
+						end
+					else
 
-				if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 75  then
-					return BLOODTHIRST
-				end
+						if self:isAggressive() then
+							if  (UnitPower("player") + self:nextOffhandExpectRange()) > 45 then
+								return WHIRLWIND,CLEAVE
 
-				if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player") > 55  and not IsCurrentSpell(25231) and windCD > 2 then
-					return BLOODTHIRST
-				end
+							elseif (UnitPower("player") + self:nextOffhandExpectRange()) > 25 then 
+								return WHIRLWIND
+							end
+						else
+							if  UnitPower("player") > 45 then
+								return WHIRLWIND,CLEAVE
+							elseif  UnitPower("player") > 25 then
+								return WHIRLWIND
+							end						
+						end	
+					end
+				else --旋风不可用
+					if IsCurrentSpell(25231)then
+						if windCD > 2 then
+							if self:IsUsableSpell(BLOODTHIRST, 1, 1) then
+								return BLOODTHIRST
+							end
+						else
+
+							if self:IsUsableSpell(BLOODTHIRST, 1, 1) then
+								if self:isAggressive() then
+									if  (UnitPower("player") + self:nextOffhandExpectRange()) > 75 then
+										return BLOODTHIRST
+									end
+								else
+									if  UnitPower("player") > 75 then
+										return BLOODTHIRST
+									end						
+								end	
+								
+							end					
+						end
+						
+					else --顺劈没在队列
+						if windCD > 2 then
+							if self:IsUsableSpell(BLOODTHIRST, 1, 1) then
+								if self:isAggressive() then
+									if  (UnitPower("player") + self:nextOffhandExpectRange()) > 50 then
+										return BLOODTHIRST,CLEAVE
+			
+									elseif (UnitPower("player") + self:nextOffhandExpectRange()) > 20 then 
+										return CLEAVE
+									end
+								else
+									if  UnitPower("player") > 50 then
+										return BLOODTHIRST,CLEAVE
+									elseif  UnitPower("player") > 20 then
+										return CLEAVE
+									end						
+								end	
+								
+							else
+								if self:IsUsableSpell(CLEAVE, 1, 1) then
+									return CLEAVE
+								end
+							end
+						else --旋风＜2秒 但是没好
+
+							if self:IsUsableSpell(BLOODTHIRST, 1, 1) then
+								if self:isAggressive() then
+									if  (UnitPower("player") + self:nextOffhandExpectRange()) > 75 then
+										return BLOODTHIRST,CLEAVE
+			
+									elseif (UnitPower("player") + self:nextOffhandExpectRange()) > 45 then 
+										return CLEAVE
+									end
+								else
+									if  UnitPower("player") > 75 then
+										return BLOODTHIRST,CLEAVE
+									elseif  UnitPower("player") > 45 then
+										return CLEAVE
+									end						
+								end	
+								
+							else
+								if self:isAggressive() then
+									if  (UnitPower("player") + self:nextOffhandExpectRange()) > 45 then
+										return CLEAVE
+									end
+								else
+									if  UnitPower("player") > 45 then
+										return CLEAVE
+									end						
+								end	
+							end		
+						end
+
+
+					end
+				end	--
 			end	
 		end
 	end
