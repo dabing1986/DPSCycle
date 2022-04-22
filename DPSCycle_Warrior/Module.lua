@@ -396,7 +396,7 @@ function module:isAggressive()
 		swingtime = 0
 	end
 
-	print("swingtime" .. swingtime)
+	-- print("swingtime" .. swingtime)
 	if swingtime + mainspeed - GetTime() < 1.5 then
 		return 1
 	else
@@ -436,7 +436,7 @@ function module:nextOffhandExpectRange()
 		table.remove(range5Table, 1 )
 	end
 	
-	print("111111" .. offhandrange)
+	-- print("111111" .. offhandrange)
 	table.insert(range5Table, offhandrange )
 
 	for k, v in pairs(range5Table) do
@@ -501,32 +501,99 @@ function module:FuryProc()
 	end
 
 	-- when to perform HAMSTRING and OVERPOWER
-	if not self:CanAE()  and hp > 20 then
+	if incombat and self:InMelee() and not self:CanAE()  and hp > 24 then
 	-- if not self:CanAE() then
 
 		if self:Canop() and self:IsUsableSpell(OVERPOWER, 1, 1) and UnitPower("player") < 10  then
 			return OVERPOWER
 		end
 
-		if btCD > 2 and windCD > 2 then
-			-- body
-		
-			if  self:IsUsableSpell(HAMSTRING, 1, 1)  and UnitPower("player") > 30 then
-				if not IsCurrentSpell(29707) then 
-					return HAMSTRING,HERORIC_STRIKE
-				else
+		if btCD > 3 and windCD > 3 then 
+
+			if IsCurrentSpell(29707) then
+				if UnitPower("player") > 22 and self:IsUsableSpell(HAMSTRING, 1, 1) then
+					-- body
 					return HAMSTRING
 				end
-			end	
-			if self:isAggressive() and self:IsUsableSpell(HERORIC_STRIKE, 1, 1) and (UnitPower("player") -12 + self:nextOffhandExpectRange()) > 10 then
-				-- show BLOODTHIRST and WHIRLWIND as well if they are not in CD
-				if not IsCurrentSpell(29707) then 
+			else
+				if UnitPower("player") > 45 and self:IsUsableSpell(HAMSTRING, 1, 1) then
 					return HAMSTRING,HERORIC_STRIKE
-				else
-					return HAMSTRING
-				end
+				elseif UnitPower("player") < 45 and self:IsUsableSpell(HAMSTRING, 1, 1) then -- body
+					if self:isAggressive() then
+						if  (UnitPower("player") + self:nextOffhandExpectRange()) > 30 then
+							return HAMSTRING,HERORIC_STRIKE
+						elseif UnitPower("player") > 30 then
+							return HAMSTRING,HERORIC_STRIKE
+						elseif UnitPower("player") < 22 then
+							return HAMSTRING
+						end
+					else
+						if  UnitPower("player") > 30 then
+							return HAMSTRING,HERORIC_STRIKE
+						elseif  UnitPower("player") < 20 then  
+							return HAMSTRING
+						end						
+					end						
+				end				
+			end
+		elseif  btCD > 3 and windCD < 3 and windCD > 0 then
+
+			if not IsCurrentSpell(29707)  then
+				if UnitPower("player") > 40 then
+					return HERORIC_STRIKE
+				else-- body
+					if self:isAggressive() then
+						if  (UnitPower("player") + self:nextOffhandExpectRange()) > 40 then
+							return HERORIC_STRIKE
+						elseif UnitPower("player") > 40 then
+							return HERORIC_STRIKE
+						end
+					else
+						if  UnitPower("player") > 40 then
+							return HERORIC_STRIKE
+						end						
+					end						
+				end					
+			end
+
+		elseif  btCD < 3 and btCD > 0 and windCD > 3 then
+			if not IsCurrentSpell(29707)  then
+				if UnitPower("player") > 42 then
+					return HERORIC_STRIKE
+				else-- body
+					if self:isAggressive() then
+						if  (UnitPower("player") + self:nextOffhandExpectRange()) > 42 then
+							return HERORIC_STRIKE
+						elseif UnitPower("player") > 42 then
+							return HERORIC_STRIKE
+						end
+					else
+						if  UnitPower("player") > 42 then
+							return HERORIC_STRIKE
+						end						
+					end						
+				end					
+			end
+		elseif  btCD < 3 and windCD < 3 and btCD > 0 and windCD > 0 then
+			if not IsCurrentSpell(29707)  then
+				if UnitPower("player") > 67 then
+					return HERORIC_STRIKE
+				else-- body
+					if self:isAggressive() then
+						if  (UnitPower("player") + self:nextOffhandExpectRange()) > 67 then
+							return HERORIC_STRIKE
+						elseif UnitPower("player") > 67 then
+							return HERORIC_STRIKE
+						end
+					else
+						if  UnitPower("player") > 67 then
+							return HERORIC_STRIKE
+						end						
+					end						
+				end					
 			end
 		end
+		
 
 		-- print("offhandspeed:".. offhandspeed)
 
@@ -627,30 +694,69 @@ function module:FuryProc()
 			if IsCurrentSpell(29707) then 
 
 				if self:IsUsableSpell(WHIRLWIND, 1, 1) then
-					return WHIRLWIND
+					if UnitPower("player") < 37 then
+						-- body
+						return WHIRLWIND, JIJIU
+					else
+						-- body
+						return WHIRLWIND
+					end				
 				end
 				
-				if windCD > 2 then
+				if windCD > 1.5 then
 					-- body
 					if self:IsUsableSpell(BLOODTHIRST, 1, 1) then
-						return BLOODTHIRST
-					end
-				else
-					if self:isAggressive() then
-						if self:IsUsableSpell(BLOODTHIRST, 1, 1) and (UnitPower("player") + self:nextOffhandExpectRange()) > 67 then
+						if UnitPower("player") < 42 then
+							-- body
+							return BLOODTHIRST, JIJIU
+						else
+							-- body
 							return BLOODTHIRST
+						end	
+
+					end
+				elseif windCD < 1.5 and windCD > 0 then 
+
+					if self:IsUsableSpell(BLOODTHIRST, 1, 1) then
+						if self:isAggressive() then
+							if  (UnitPower("player") + self:nextOffhandExpectRange()) > 67 then
+								return BLOODTHIRST
+							elseif (UnitPower("player") + self:nextOffhandExpectRange()) < 67 then
+								return BLOODTHIRST, JIJIU
+							end
+						else
+							if  UnitPower("player")> 67 then
+								if  UnitPower("player") > 67 then
+									return BLOODTHIRST
+								elseif UnitPower("player") < 67 then
+									return BLOODTHIRST, JIJIU
+								end
+							end						
 						end
 					else
-						if self:IsUsableSpell(BLOODTHIRST, 1, 1) and UnitPower("player")> 67 then
-							return BLOODTHIRST
-						end						
+						if self:isAggressive() then
+							if  (UnitPower("player") + self:nextOffhandExpectRange()) < 37 then
+								return JIJIU
+							end
+						else
+							if  UnitPower("player") < 37 then
+								return JIJIU
+							end						
+						end
 					end
+
 				end
 
 				-- if self:IsUsableSpell(BLOODTHIRST, 1, 1) then
 				-- 	return BLOODTHIRST
 				-- end
 			else
+				
+				-- return WHIRLWIND,HERORIC_STRIKE
+				-- return BLOODTHIRST,HERORIC_STRIKE
+				-- return WHIRLWIND
+				-- return BLOODTHIRST
+				-- return HERORIC_STRIKE
 
 				if self:IsUsableSpell(WHIRLWIND, 1, 1) then
 
@@ -665,14 +771,10 @@ function module:FuryProc()
 						if self:isAggressive() then
 							if (UnitPower("player") + self:nextOffhandExpectRange()) > 67 then
 								return WHIRLWIND,HERORIC_STRIKE
-							elseif (UnitPower("player") + self:nextOffhandExpectRange()) > 55 then
-								return WHIRLWIND
 							end
 						else
 							if UnitPower("player") > 67 then
 								return WHIRLWIND,HERORIC_STRIKE
-							elseif UnitPower("player") > 55 then
-								return WHIRLWIND
 							end							
 						end
 					end
@@ -683,6 +785,7 @@ function module:FuryProc()
 					-- body
 					-- BLOODTHIRST?
 					-- BLOODTHIRST,HERORIC_STRIKE?
+					-- HERORIC_STRIKE
 
 					if  self:IsUsableSpell(BLOODTHIRST, 1, 1)  and UnitPower("player") > 42 then
 						return BLOODTHIRST,HERORIC_STRIKE
@@ -695,7 +798,7 @@ function module:FuryProc()
 						if UnitPower("player") > 12 then
 							return HERORIC_STRIKE
 						end
-					else
+					elseif btCD < 2 and btCD > 0 then 
 						if self:isAggressive() then
 							if  (UnitPower("player") + self:nextOffhandExpectRange()) > 42 then
 								return HERORIC_STRIKE
@@ -707,7 +810,7 @@ function module:FuryProc()
 						end							
 					end
 
-				else --旋风斩还差2秒准备就绪 
+				elseif windCD < 2 and windCD > 0 then--旋风斩还差2秒准备就绪 
 
 					-- BLOODTHIRST?
 					-- BLOODTHIRST,HERORIC_STRIKE?
