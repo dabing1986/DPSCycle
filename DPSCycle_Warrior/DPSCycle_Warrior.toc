@@ -6,5 +6,6 @@
 ## Author: Fengshen
 ## Dependencies: DPSCycle
 
+embeds.xml
 Module.lua
 

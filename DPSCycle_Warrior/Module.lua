@@ -7,7 +7,7 @@
 local module = DPSCycle:CreateModule("WARRIOR")
 if not module then return end
 
-
+local RC = LibStub("LibRangeCheck-2.0")
 -- 乘胜追击
 local VICTORY_RUSH = GetSpellInfo(34428)
 -- 横扫攻击
@@ -152,13 +152,19 @@ function module:CanAE()
 	local enemycount = 0
 	for i = 1, 40 do
 		local unit = "nameplate"..i
-		if UnitCanAttack("player", unit) and IsSpellInRange(REND, unit) == 1 and self:UnitAura(unit, "变形术", 1) then
-			enemycount = 1
-			break
-		end
-		if UnitCanAttack("player", unit) and IsSpellInRange(REND, unit) == 1 and not self:UnitAura(unit, "放逐术", 1) then
+
+		local range = RC:GetRange(unit, true)
+
+		if range ~= nil and range <= 5 and range > 0 then
 			enemycount = enemycount + 1
 		end
+		-- if UnitCanAttack("player", unit) and IsSpellInRange(REND, unit) == 1 and self:UnitAura(unit, "变形术", 1) then
+		-- 	enemycount = 1
+		-- 	break
+		-- end
+		-- if UnitCanAttack("player", unit) and IsSpellInRange(REND, unit) == 1 and not self:UnitAura(unit, "放逐术", 1) then
+		-- 	enemycount = enemycount + 1
+		-- end
 	end
 	if enemycount > 1 then
 		return 1
@@ -171,7 +177,8 @@ function module:CanAOEEexecute()
 	local enemycount = 0
 	for i = 1, 40 do
 		local unit = "nameplate"..i
-		if module:UnitHealthPercent(unit) < 20 and IsSpellInRange(REND, unit) == 1  then
+		local range = RC:GetRange(unit, true)
+		if module:UnitHealthPercent(unit) < 20 and range ~= nil and range <= 5 and range > 0  then
 			enemycount = enemycount + 1
 		end
 	end
@@ -186,13 +193,25 @@ function module:CanAE4()
 	local enemycount = 0
 	for i = 1, 40 do
 		local unit = "nameplate"..i
-		if UnitCanAttack("player", unit) and IsSpellInRange(REND, unit) == 1 and self:UnitAura(unit, "变形术", 1) then
-			enemycount = 1
-			break
-		end
-		if UnitCanAttack("player", unit) and IsSpellInRange(REND, unit) == 1 and not self:UnitAura(unit, "放逐术", 1) then
+		local range = RC:GetRange(unit, true)
+
+		-- if range == nil then
+		-- 	print(i)
+		-- else
+		-- 	print("notnil" .. range)
+		-- end
+		
+		if range ~= nil and range <= 5 and range > 0  then
 			enemycount = enemycount + 1
 		end
+
+		-- if UnitCanAttack("player", unit) and IsSpellInRange(REND, unit) == 1 and self:UnitAura(unit, "变形术", 1) then
+		-- 	enemycount = 1
+		-- 	break
+		-- end
+		-- if UnitCanAttack("player", unit) and IsSpellInRange(REND, unit) == 1 and not self:UnitAura(unit, "放逐术", 1) then
+		-- 	enemycount = enemycount + 1
+		-- end
 	end
 	if enemycount >= 4 then
 		return 1
@@ -205,13 +224,24 @@ function module:CanAE2()
 	local enemycount = 0
 	for i = 1, 40 do
 		local unit = "nameplate"..i
-		if UnitCanAttack("player", unit) and IsSpellInRange(REND, unit) == 1 and self:UnitAura(unit, "变形术", 1) then
-			enemycount = 1
-			break
-		end
-		if UnitCanAttack("player", unit) and IsSpellInRange(REND, unit) == 1 and not self:UnitAura(unit, "放逐术", 1) then
+		local range = RC:GetRange(unit, true)
+
+		-- if range == nil then
+		-- 	print(i)
+		-- else
+		-- 	print("notnil" .. range)
+		-- end
+		
+		if range ~= nil and range <= 5 and range > 0  then
 			enemycount = enemycount + 1
 		end
+		-- if UnitCanAttack("player", unit) and IsSpellInRange(REND, unit) == 1 and self:UnitAura(unit, "变形术", 1) then
+		-- 	enemycount = 1
+		-- 	break
+		-- end
+		-- if UnitCanAttack("player", unit) and IsSpellInRange(REND, unit) == 1 and not self:UnitAura(unit, "放逐术", 1) then
+		-- 	enemycount = enemycount + 1
+		-- end
 	end
 	if enemycount > 1 and enemycount < 4 then
 		return 1
@@ -516,21 +546,21 @@ function module:FuryProc()
 					return HAMSTRING
 				end
 			else
-				if UnitPower("player") > 45 and self:IsUsableSpell(HAMSTRING, 1, 1) then
+				if UnitPower("player") > 55 and self:IsUsableSpell(HAMSTRING, 1, 1) then
 					return HAMSTRING,HERORIC_STRIKE
-				elseif UnitPower("player") < 45 and self:IsUsableSpell(HAMSTRING, 1, 1) then -- body
+				elseif UnitPower("player") < 55 and self:IsUsableSpell(HAMSTRING, 1, 1) then -- body
 					if self:isAggressive() then
-						if  (UnitPower("player") + self:nextOffhandExpectRange()) > 30 then
+						if  (UnitPower("player") + self:nextOffhandExpectRange()) > 40 then
 							return HAMSTRING,HERORIC_STRIKE
-						elseif UnitPower("player") > 30 then
+						elseif UnitPower("player") > 40 then
 							return HAMSTRING,HERORIC_STRIKE
-						elseif UnitPower("player") < 22 then
+						elseif UnitPower("player") < 32 then
 							return HAMSTRING
 						end
 					else
-						if  UnitPower("player") > 30 then
+						if  UnitPower("player") > 40 then
 							return HAMSTRING,HERORIC_STRIKE
-						elseif  UnitPower("player") < 20 then  
+						elseif  UnitPower("player") < 30 then  
 							return HAMSTRING
 						end						
 					end						
@@ -539,17 +569,17 @@ function module:FuryProc()
 		elseif  btCD > 3 and windCD < 3 and windCD > 0 then
 
 			if not IsCurrentSpell(29707)  then
-				if UnitPower("player") > 40 then
+				if UnitPower("player") > 50 then
 					return HERORIC_STRIKE
 				else-- body
 					if self:isAggressive() then
-						if  (UnitPower("player") + self:nextOffhandExpectRange()) > 40 then
+						if  (UnitPower("player") + self:nextOffhandExpectRange()) > 50 then
 							return HERORIC_STRIKE
-						elseif UnitPower("player") > 40 then
+						elseif UnitPower("player") > 50 then
 							return HERORIC_STRIKE
 						end
 					else
-						if  UnitPower("player") > 40 then
+						if  UnitPower("player") > 50 then
 							return HERORIC_STRIKE
 						end						
 					end						
@@ -558,17 +588,17 @@ function module:FuryProc()
 
 		elseif  btCD < 3 and btCD > 0 and windCD > 3 then
 			if not IsCurrentSpell(29707)  then
-				if UnitPower("player") > 42 then
+				if UnitPower("player") > 52 then
 					return HERORIC_STRIKE
 				else-- body
 					if self:isAggressive() then
-						if  (UnitPower("player") + self:nextOffhandExpectRange()) > 42 then
+						if  (UnitPower("player") + self:nextOffhandExpectRange()) > 52 then
 							return HERORIC_STRIKE
-						elseif UnitPower("player") > 42 then
+						elseif UnitPower("player") > 52 then
 							return HERORIC_STRIKE
 						end
 					else
-						if  UnitPower("player") > 42 then
+						if  UnitPower("player") > 52 then
 							return HERORIC_STRIKE
 						end						
 					end						
@@ -576,17 +606,17 @@ function module:FuryProc()
 			end
 		elseif  btCD < 3 and windCD < 3 and btCD > 0 and windCD > 0 then
 			if not IsCurrentSpell(29707)  then
-				if UnitPower("player") > 67 then
+				if UnitPower("player") > 77 then
 					return HERORIC_STRIKE
 				else-- body
 					if self:isAggressive() then
-						if  (UnitPower("player") + self:nextOffhandExpectRange()) > 67 then
+						if  (UnitPower("player") + self:nextOffhandExpectRange()) > 77 then
 							return HERORIC_STRIKE
-						elseif UnitPower("player") > 67 then
+						elseif UnitPower("player") > 77 then
 							return HERORIC_STRIKE
 						end
 					else
-						if  UnitPower("player") > 67 then
+						if  UnitPower("player") > 77 then
 							return HERORIC_STRIKE
 						end						
 					end						
@@ -760,20 +790,20 @@ function module:FuryProc()
 
 				if self:IsUsableSpell(WHIRLWIND, 1, 1) then
 
-					if  UnitPower("player") > 67 then
+					if  UnitPower("player") > 77 then
 						return WHIRLWIND,HERORIC_STRIKE
 					end
 					if btCD > 2 then
-						if self:IsUsableSpell(HERORIC_STRIKE, 1, 1) and UnitPower("player")  > 37 then
+						if self:IsUsableSpell(HERORIC_STRIKE, 1, 1) and UnitPower("player")  > 47 then
 							return WHIRLWIND,HERORIC_STRIKE
 						end
 					else
 						if self:isAggressive() then
-							if (UnitPower("player") + self:nextOffhandExpectRange()) > 67 then
+							if (UnitPower("player") + self:nextOffhandExpectRange()) > 77 then
 								return WHIRLWIND,HERORIC_STRIKE
 							end
 						else
-							if UnitPower("player") > 67 then
+							if UnitPower("player") > 77 then
 								return WHIRLWIND,HERORIC_STRIKE
 							end							
 						end
@@ -781,50 +811,50 @@ function module:FuryProc()
 					return WHIRLWIND
 				end
 				
-				if windCD > 2 then
+				if windCD > 1.5 then
 					-- body
 					-- BLOODTHIRST?
 					-- BLOODTHIRST,HERORIC_STRIKE?
 					-- HERORIC_STRIKE
 
-					if  self:IsUsableSpell(BLOODTHIRST, 1, 1)  and UnitPower("player") > 42 then
+					if  self:IsUsableSpell(BLOODTHIRST, 1, 1)  and UnitPower("player") > 52 then
 						return BLOODTHIRST,HERORIC_STRIKE
 					end
-					if  self:IsUsableSpell(BLOODTHIRST, 1, 1)  and UnitPower("player") > 30 then
+					if  self:IsUsableSpell(BLOODTHIRST, 1, 1)  then
 						return BLOODTHIRST
 					end
 
 					if btCD > 2 then
-						if UnitPower("player") > 12 then
+						if UnitPower("player") > 22 then
 							return HERORIC_STRIKE
 						end
 					elseif btCD < 2 and btCD > 0 then 
 						if self:isAggressive() then
-							if  (UnitPower("player") + self:nextOffhandExpectRange()) > 42 then
+							if  (UnitPower("player") + self:nextOffhandExpectRange()) > 52 then
 								return HERORIC_STRIKE
 							end
 						else
-							if  UnitPower("player") > 42 then
+							if  UnitPower("player") > 52 then
 								return HERORIC_STRIKE
 							end						
 						end							
 					end
 
-				elseif windCD < 2 and windCD > 0 then--旋风斩还差2秒准备就绪 
+				elseif windCD < 1.5 and windCD > 0 then--旋风斩还差2秒准备就绪 
 
 					-- BLOODTHIRST?
 					-- BLOODTHIRST,HERORIC_STRIKE?
 					-- HERORIC_STRIKE?
 					if self:IsUsableSpell(BLOODTHIRST, 1, 1) then 
 						if self:isAggressive() then
-							if  (UnitPower("player") + self:nextOffhandExpectRange()) > 67 then
+							if  (UnitPower("player") + self:nextOffhandExpectRange()) > 77 then
 								return BLOODTHIRST,HERORIC_STRIKE
 
 							elseif (UnitPower("player") + self:nextOffhandExpectRange()) > 55 then 
 								return BLOODTHIRST
 							end
 						else
-							if  UnitPower("player") > 67 then
+							if  UnitPower("player") > 77 then
 								return BLOODTHIRST,HERORIC_STRIKE
 							elseif  UnitPower("player") > 55 then
 								return BLOODTHIRST
@@ -832,11 +862,11 @@ function module:FuryProc()
 						end		
 					else --嗜血cd没好 且旋风还剩2秒就好 只需要判断是否释放英勇
 						if self:isAggressive() then
-							if  (UnitPower("player") + self:nextOffhandExpectRange()) > 37 then
+							if  (UnitPower("player") + self:nextOffhandExpectRange()) > 47 then
 								return HERORIC_STRIKE
 							end
 						else
-							if  UnitPower("player") > 37 then
+							if  UnitPower("player") > 47 then
 								return HERORIC_STRIKE
 							end						
 						end	
